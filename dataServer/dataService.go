@@ -1,7 +1,19 @@
 package dataServer
 
+import "log"
+
 //从kafka 消费数据
 
-//数据校验
+func BillGasStationDataCollect() {
 
-//数据入库
+KafkaI:
+	log.Println("执行处理kafka数据++++++++++++++++++++++++【kafka执行】+++++++++++++++++++++++++++++++++处理kafka数据")
+	//处理kafka数据
+
+	err := ConsumerGroup()
+	if err != nil {
+		log.Println("+++++++++++++++++++++++++++++++++++++++++++++++++++【执行go程 处理kafka数据】 error :", err)
+		goto KafkaI
+	}
+
+}

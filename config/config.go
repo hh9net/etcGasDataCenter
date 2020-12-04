@@ -5,8 +5,8 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-var conffilepath = "./conf/config.toml" // go run main.go
-//var conffilepath = "../conf/config.toml"
+//var conffilepath = "./conf/config.toml" // go run main.go
+var conffilepath = "../conf/config.toml"
 
 type Config struct { //配置文件要通过tag来指定配置文件中的名称
 	//mysql 配置
@@ -17,12 +17,7 @@ type Config struct { //配置文件要通过tag来指定配置文件中的名称
 	Mdatabasename string `ini:"mysql_databasename"`
 	MKeepalive    int    `ini:"mysql_keepalive"`
 	MTimeout      int    `ini:"mysql_timeout"`
-	//黑名单mysql
-	HMHostname     string `ini:"hmysql_hostname"`
-	HMPort         string `ini:"hmysql_port"`
-	HMUserName     string `ini:"hmysql_user"`
-	HMPass         string `ini:"hmysql_pass"`
-	HMdatabasename string `ini:"hmysql_databasename"`
+
 	//redis
 	RedisAddr         string `ini:"redis_addr"`
 	RedisPass         string `ini:"redis_pass"`
@@ -35,20 +30,17 @@ type Config struct { //配置文件要通过tag来指定配置文件中的名称
 
 	//外网id
 	IpAddress string `ini:"ip_address"`
-	//
-	HlsyncAddr     string `ini:"hl_address"`
-	Parkids        string `ini:"parkids"`
-	Tradestarttime string `ini:"tradestarttime"`
 
 	//频率
 	Frequency int `ini:"frequency"`
 
 	//kafkaip
-	KafkaIpa      string `ini:"kafka_ipa"`
-	KafkaIpb      string `ini:"kafka_ipb"`
-	KafkaIpc      string `ini:"kafka_ipc"`
-	DdkafkaTopic  string `ini:"ddkafka_topic"`
-	ZdzkafkaTopic string `ini:"zdzkafka_topic"`
+	KafkaIp string `ini:"kafka_ip"`
+
+	KafkaIpa     string `ini:"kafka_ipa"`
+	KafkaIpb     string `ini:"kafka_ipb"`
+	KafkaIpc     string `ini:"kafka_ipc"`
+	DdkafkaTopic string `ini:"ddkafka_topic"`
 }
 
 //读取配置文件并转成结构体
