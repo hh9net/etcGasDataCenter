@@ -22,7 +22,7 @@ func TestConsumer(t *testing.T) {
 //
 func TestProducer(t *testing.T) {
 	//logrus.Print("生成数据")
-	Producer("topic1", "09876")
+	//Producer("topic1", "09876")
 
 }
 

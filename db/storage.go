@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"etcGasDataCenter/config"
 	"etcGasDataCenter/types"
 	"etcGasDataCenter/utils"
@@ -39,8 +40,25 @@ func InsertChedckyssjData(Chedckyssj *types.BDdChedckyssj) error {
 		log.Println("Insert b_dd_chedckyssj error:", err)
 		return err
 	}
-	log.Println("单点车道出口原始数据表插入成功！")
+	log.Println("单点车道出口原始数据表插入成功！", Chedckyssj.FVcJiaoyjlid)
 	return nil
+}
+
+//2.1
+func QueryChedckyssjData(jyjlid string) error {
+	db := utils.GormClient.Client
+	yssj := new(types.BDdChedckyssj)
+	if err := db.Table("b_dd_chedckyssj").Where("F_VC_JIAOYJLID=?", jyjlid).First(yssj).Error; err != nil {
+		// 错误处理...
+		log.Println("Query b_dd_chedckyssj error:", err)
+		if fmt.Sprint(err) == "record not found" {
+			log.Println("QueryChedckyssjData err == `record not found`:", err)
+			return nil
+		}
+		return err
+	}
+	log.Println("Query 单点车道出口原始数据表插入成功！", yssj.FVcJiaoyjlid)
+	return errors.New("单点车道出口原始数据已经存在")
 }
 
 //3、单点车道出口原始数据加油明细插入
@@ -104,27 +122,29 @@ func DataStorage(data *types.KafKaMsg) error {
 	JYTJS := strings.Split(JYsj[1], ":")
 	ysdata.FVcJiaoytjrs = JYTJS[0] //  `F_VC_JIAOYTJRS` varchar(32) DEFAULT NULL COMMENT '交易统计时',
 
-	ysdata.FVcTingccbh = data.Data.Parking_id                         //  `F_VC_TINGCCBH` varchar(32) NOT NULL COMMENT '停车场编号',
-	ysdata.FVcChedid = data.Data.Lane_id                              //  `F_VC_CHEDID` varchar(32) NOT NULL COMMENT '车道ID',
-	ysdata.FVcGongsjtid = data.Data.Company_id                        //  `F_VC_GONGSJTID` varchar(32) NOT NULL COMMENT '公司/集团ID',
-	ysdata.FVcQudid = data.Data.Channel_id                            //  `F_VC_QUDID` varchar(32) DEFAULT NULL COMMENT '渠道ID',
-	ysdata.FVcShanghnjlid = data.Data.Record_id                       //  `F_VC_SHANGHNJLID` varchar(128) NOT NULL COMMENT '商户内记录ID',
-	ysdata.FVcShanghnjlxh = data.Data.Record_no                       //  `F_VC_SHANGHNJLXH` varchar(32) NOT NULL COMMENT '商户内记录的序号',
-	ysdata.FVcJiamkh = data.Data.Etc_terminal_id                      //  `F_VC_JIAMKH` varchar(32) NOT NULL COMMENT '加密卡号',
-	ysdata.FVcKajmjyxh = data.Data.Etc_termtrad_no                    //  `F_VC_KAJMJYXH` varchar(32) NOT NULL COMMENT '加密卡交易序号',
-	ysdata.FVcObuid = data.Data.Obu_id                                //  `F_VC_OBUID` varchar(32) NOT NULL COMMENT 'Obuid',
-	ysdata.FVcObufxf = data.Data.Obu_issuer                           //  `F_VC_OBUFXF` varchar(32) NOT NULL COMMENT 'obu发行方',
-	ysdata.FVcObucp = data.Data.Obu_plate                             //  `F_VC_OBUCP` varchar(32) NOT NULL COMMENT 'obu内车牌',
-	ysdata.FVcObucpys = data.Data.Obu_plate_color                     //  `F_VC_OBUCPYS` varchar(32) NOT NULL COMMENT 'obu车牌颜色',
-	ysdata.FDtObuyxq = utils.StrTimeTotime(data.Data.Obu_expire_date) //  `F_DT_OBUYXQ` datetime NOT NULL COMMENT 'obu有效期',
-	ysdata.FVcKah = data.Data.Card_id                                 //  `F_VC_KAH` varchar(32) NOT NULL COMMENT '卡号',
-	ysdata.FVcKawlh = data.Data.Card_network                          //  `F_VC_KAWLH` varchar(32) NOT NULL COMMENT '卡网络号',
-	ysdata.FVcKajyxh = data.Data.Card_trade_no                        //  `F_VC_KAJYXH` varchar(32) NOT NULL COMMENT '卡交易序号',
-	ysdata.FVcKafxf = data.Data.Card_issuer                           //  `F_VC_KAFXF` varchar(32) NOT NULL COMMENT '卡发行方',
+	ysdata.FVcTingccbh = data.Data.Parking_id      //  `F_VC_TINGCCBH` varchar(32) NOT NULL COMMENT '停车场编号',
+	ysdata.FVcChedid = data.Data.Lane_id           //  `F_VC_CHEDID` varchar(32) NOT NULL COMMENT '车道ID',
+	ysdata.FVcGongsjtid = data.Data.Company_id     //  `F_VC_GONGSJTID` varchar(32) NOT NULL COMMENT '公司/集团ID',
+	ysdata.FVcQudid = data.Data.Channel_id         //  `F_VC_QUDID` varchar(32) DEFAULT NULL COMMENT '渠道ID',
+	ysdata.FVcShanghnjlid = data.Data.Record_id    //  `F_VC_SHANGHNJLID` varchar(128) NOT NULL COMMENT '商户内记录ID',
+	ysdata.FVcShanghnjlxh = data.Data.Record_no    //  `F_VC_SHANGHNJLXH` varchar(32) NOT NULL COMMENT '商户内记录的序号',
+	ysdata.FVcJiamkh = data.Data.Etc_terminal_id   //  `F_VC_JIAMKH` varchar(32) NOT NULL COMMENT '加密卡号',
+	ysdata.FVcKajmjyxh = data.Data.Etc_termtrad_no //  `F_VC_KAJMJYXH` varchar(32) NOT NULL COMMENT '加密卡交易序号',
+	ysdata.FVcObuid = data.Data.Obu_id             //  `F_VC_OBUID` varchar(32) NOT NULL COMMENT 'Obuid',
+	ysdata.FVcObufxf = data.Data.Obu_issuer        //  `F_VC_OBUFXF` varchar(32) NOT NULL COMMENT 'obu发行方',
+	ysdata.FVcObucp = data.Data.Obu_plate          //  `F_VC_OBUCP` varchar(32) NOT NULL COMMENT 'obu内车牌',
+	ysdata.FVcObucpys = data.Data.Obu_plate_color  //  `F_VC_OBUCPYS` varchar(32) NOT NULL COMMENT 'obu车牌颜色',
+
+	ysdata.FDtObuyxq = utils.StrDATETimeTotime(data.Data.Obu_expire_date) //  `F_DT_OBUYXQ` datetime NOT NULL COMMENT 'obu有效期',
+
+	ysdata.FVcKah = data.Data.Card_id          //  `F_VC_KAH` varchar(32) NOT NULL COMMENT '卡号',
+	ysdata.FVcKawlh = data.Data.Card_network   //  `F_VC_KAWLH` varchar(32) NOT NULL COMMENT '卡网络号',
+	ysdata.FVcKajyxh = data.Data.Card_trade_no //  `F_VC_KAJYXH` varchar(32) NOT NULL COMMENT '卡交易序号',
+	ysdata.FVcKafxf = data.Data.Card_issuer    //  `F_VC_KAFXF` varchar(32) NOT NULL COMMENT '卡发行方',
 	clx, _ := strconv.Atoi(data.Data.Card_type)
 	ysdata.FNbKalx = clx //  `F_NB_KALX` int(11) DEFAULT NULL COMMENT '卡类型',
 
-	ysdata.FVcKadqsj = data.Data.Card_expired //  `F_VC_KADQSJ` datetime NOT NULL COMMENT '卡到期时间',
+	ysdata.FVcKadqsj = utils.StrDATETimeTotime(data.Data.Card_expired) //  `F_VC_KADQSJ` datetime NOT NULL COMMENT '卡到期时间',
 
 	qm, _ := strconv.Atoi(data.Data.Reset_money)
 	ysdata.FNbJiaoyqye = int64(qm) //  `F_NB_JIAOYQYE` bigint(20) NOT NULL COMMENT '交易前余额',
@@ -138,8 +158,14 @@ func DataStorage(data *types.KafKaMsg) error {
 	ysdata.FVcTacm = data.Data.Tac                                //  `F_VC_TACM` varchar(32) NOT NULL COMMENT 'TAC码',
 	ysdata.FDtJiaoysj = utils.StrTimeTotime(data.Data.Trade_time) //  `F_DT_JIAOYSJ` datetime NOT NULL COMMENT '交易时间',
 
-	ysdata.FDtJiaoylx = data.Data.Trade_type     //  `F_DT_JIAOYLX` varchar(32) NOT NULL COMMENT '交易类型',
-	ysdata.FVcChdjrsq = data.Data.Lane_key       //  `F_VC_CHDJRSQ` varchar(32) NOT NULL COMMENT '车道接入授权',[???????]
+	ysdata.FDtJiaoylx = data.Data.Trade_type //  `F_DT_JIAOYLX` varchar(32) NOT NULL COMMENT '交易类型',
+
+	if data.Data.Lane_key != "" {
+		ysdata.FVcChdjrsq = data.Data.Lane_key //  `F_VC_CHDJRSQ` varchar(32) NOT NULL COMMENT '车道接入授权',[???????]
+	} else {
+		ysdata.FVcChdjrsq = ""
+	}
+
 	ysdata.FVcChex = data.Data.Vehicle           //  `F_VC_CHEX` varchar(32) NOT NULL COMMENT '车型',
 	ysdata.FVcObuzt = data.Data.Obu_status       //  `F_VC_OBUZT` varchar(32) NOT NULL COMMENT 'OBu状态',
 	ysdata.FVcCheph = data.Data.Plate_num        //  `F_VC_CHEPH` varchar(32) NOT NULL COMMENT '车牌号',
@@ -148,7 +174,11 @@ func DataStorage(data *types.KafKaMsg) error {
 	ysdata.FVcHeimdjybb = data.Data.Black_ver    //  `F_VC_HEIMDJYBB` varchar(32) NOT NULL COMMENT '黑名单校验版本',
 	ysdata.FVcJiztzhd = data.Data.Notify         //  `F_VC_JIZTZHD` varchar(1024) NOT NULL COMMENT '记账通知回调',
 
-	ysdata.FDtYonghrksj = utils.StrTimeTotime(data.Data.Entry_time) //  `F_DT_YONGHRKSJ` datetime DEFAULT NULL COMMENT '用户入口时间',
+	if data.Data.Entry_time != "" {
+		ysdata.FDtYonghrksj = utils.StrTimeTotime(data.Data.Entry_time) //  `F_DT_YONGHRKSJ` datetime DEFAULT NULL COMMENT '用户入口时间',
+
+	}
+
 	yhtcsc, _ := strconv.Atoi(data.Data.Duration)
 	ysdata.FNbYonghtcsc = yhtcsc //  `F_NB_YONGHTCSC` int(11) DEFAULT NULL COMMENT '用户停车时长(分)',
 
@@ -158,14 +188,14 @@ func DataStorage(data *types.KafKaMsg) error {
 
 	ysdata.FDtCaijsj = utils.StrTimeTotime(time.Now().Format("2006-01-02 15:04:05")) //  `F_DT_CAIJSJ` datetime NOT NULL COMMENT '采集时间',入库时间 2020-04-30 15:23:45
 
-	ysdata.FVcJiaoyzt = "0" //  `F_VC_JIAOYZT` int(11) NOT NULL COMMENT '交易状态',
-	//ysdata.FVcYiclx = //  `F_VC_YICLX` int(11) DEFAULT NULL COMMENT '异常类型',
+	ysdata.FVcJiaoyzt = 0 //  `F_VC_JIAOYZT` int(11) NOT NULL COMMENT '交易状态',
+	ysdata.FVcYiclx = 0   //  `F_VC_YICLX` int(11) DEFAULT NULL COMMENT '异常类型',
 	//ysdata.FVcYicyy = //  `F_VC_YICYY` varchar(32) DEFAULT NULL COMMENT '异常原因',
 
-	ysdata.FVcHuidtzsj = time.Now().Format("2006-01-02 15:04:05") //  `F_VC_HUIDTZSJ` datetime NOT NULL COMMENT '回调通知时间',
+	ysdata.FVcHuidtzsj = utils.StrTimeTotime(time.Now().Format("2006-01-02 15:04:05")) //  `F_VC_HUIDTZSJ` datetime NOT NULL COMMENT '回调通知时间',
 
-	ysdata.FVcHuidtzzt = "1" //  `F_VC_HUIDTZZT` int(11) NOT NULL COMMENT '回调通知状态 1:表示已通知;0:表示未通知',
-	ysdata.FVcHuidtzcs = "1" //  `F_VC_HUIDTZCS` int(11) NOT NULL COMMENT '回调通知次数',
+	ysdata.FVcHuidtzzt = 1 //  `F_VC_HUIDTZZT` int(11) NOT NULL COMMENT '回调通知状态 1:表示已通知;0:表示未通知',
+	ysdata.FVcHuidtzcs = 1 //  `F_VC_HUIDTZCS` int(11) NOT NULL COMMENT '回调通知次数',
 
 	//ysdata.FVcZuofbj = //  `F_VC_ZUOFBJ` int(11) DEFAULT NULL COMMENT '作废标记',
 	//ysdata.FVcZuofsj = //  `F_VC_ZUOFSJ` datetime DEFAULT NULL COMMENT '作废时间',
@@ -190,6 +220,7 @@ func DataStorage(data *types.KafKaMsg) error {
 
 	//查询停车场费率，查询公司费率
 	Rate := QueryRate(data.Data.Parking_id, data.Data.Company_id)
+
 	if Rate != nil {
 		ysdata.FNbFeil = Rate.Rate //  `F_NB_FEIL` int(11) DEFAULT NULL COMMENT '费率-NEW 万分比',
 		//金额*费率/10000
@@ -220,21 +251,30 @@ func DataStorage(data *types.KafKaMsg) error {
 	//ysdata.FNbTiantjzt =0 //  `F_NB_TIANTJZT` int(11) DEFAULT '0' COMMENT '天统计状态 0：未统计、1：已统计',
 
 	if data.Data.DeviceType == "31" {
-		ysdata.FNbTingycj = 31 //`F_NB_YINGYCJ` int(11) NOT NULL DEFAULT '1' COMMENT '应用场景 1、单点停车场；31、单点加油站',
+		ysdata.FNbYingycj = 31 //`F_NB_YINGYCJ` int(11) NOT NULL DEFAULT '1' COMMENT '应用场景 1、单点停车场；31、单点加油站',
 	} else {
-		log.Println("应用场景不对:", data.Data.DeviceType)
-		ysdata.FNbTingycj = 31 //`F_NB_YINGYCJ` int(11) NOT NULL DEFAULT '1' COMMENT '应用场景 1、单点停车场；31、单点加油站',
+		log.Println("应用场景不对:", data.Data.DeviceType, "已经改成31")
+		ysdata.FNbYingycj = 31 //`F_NB_YINGYCJ` int(11) NOT NULL DEFAULT '1' COMMENT '应用场景 1、单点停车场；31、单点加油站',
 	}
 
 	//ysdata.FNbSheblx = 0 //`F_NB_SHEBLX` int(11) NOT NULL DEFAULT '0' COMMENT '设备类型 0、标准设备；1、手持机',
 
+	qyssjerr := QueryChedckyssjData(ysdata.FVcJiaoyjlid)
+	if qyssjerr != nil {
+		if fmt.Sprint(qyssjerr) == "单点车道出口原始数据已经存在" {
+			log.Println(qyssjerr)
+			return qyssjerr
+		} else {
+			return qyssjerr
+		}
+	}
+
 	//单点车道出口原始交易数据入库
 	inerr := InsertChedckyssjData(ysdata)
 	if inerr != nil {
-		log.Println("+++++++++++++++++++++++单点车道出口原始交易数据入库失败+++++++++++++++++++++++")
+		log.Println("+++++++++单点车道出口原始交易数据入库失败++++++", inerr)
 		return inerr
 	}
-	log.Println("单点车道出口原始交易数据入库成功！")
 
 	//加油明细赋值
 	jymx := new(types.BJyzJiaymx)
@@ -251,10 +291,9 @@ func DataStorage(data *types.KafKaMsg) error {
 	//新增车道出口原始交易数据加油明细
 	inmxerr := InsertChedckyssjJYMXData(jymx)
 	if inmxerr != nil {
-		log.Println("+++++++++++++++++++++++新增车道出口原始交易数据加油明细失败+++++++++++++++++++++++")
+		log.Println("+++++++++++++++++++++++新增车道出口原始交易数据加油明细失败+++++inmxerr:", inmxerr)
 		return inmxerr
 	}
-	log.Println("新增车道出口原始交易数据加油明细成功！")
 	return nil
 }
 

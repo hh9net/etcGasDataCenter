@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/360EntSecGroup-Skylar/excelize v1.4.1
 	github.com/BurntSushi/toml v0.3.1
+	github.com/ShinyTrinkets/meta-logger v0.2.0
 	github.com/Shopify/sarama v1.27.2
 	github.com/garyburd/redigo v1.6.2
 	github.com/gin-gonic/gin v1.6.3

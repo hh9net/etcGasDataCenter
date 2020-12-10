@@ -9,7 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
-
 	"syscall"
 	"time"
 
@@ -27,7 +26,7 @@ const (
 //var brokerAddrs = []string{kafkaConn1, kafkaConn2, kafkaConn3}
 
 //生产数据
-func Producer(msgType string, value string) {
+func Producer(msgdata []byte, id string) {
 	config := sarama.NewConfig()
 
 	// 等待服务器 所有副本都保存成功后的响应
@@ -41,13 +40,37 @@ func Producer(msgType string, value string) {
 
 	// 使用给定代理地址和配置创建一个同步生产者
 	//producer, err := sarama.NewSyncProducer([]string{"localhost:9092"}, config)
-	producer, err := sarama.NewSyncProducer([]string{"localhost:9092"}, config)
+	producer, err := sarama.NewSyncProducer([]string{types.KafkaIp}, config)
 
 	if err != nil {
-		panic(err)
+		log.Println("sarama.NewSyncProducer errpr:", err)
+		return
 	}
 
-	defer producer.Close()
+	defer func() {
+		_ = producer.Close()
+	}()
+
+	data := new(types.KafKaMsg)
+	err = json.Unmarshal(msgdata, &data)
+	if err != nil {
+		log.Println("dd +++++++++++++++++json.Unmarshal error:", err)
+		return
+	}
+
+	d := new(types.KafKaReply)
+
+	d.Head.Topic = data.Head.Topic                              //消息类型 如exitdata
+	d.Head.Index = data.Head.Index                              //消息序号,自增
+	d.Head.Topicreply = data.Head.Topicreply                    // 消息回执的主题
+	d.Head.Id = data.Head.Id                                    //数据ID
+	d.Head.Topictime = time.Now().Format("2006-01-02 15:04:05") // 入kafka的时间
+	d.Head.Lane_id = data.Head.Lane_id                          //车道id
+	d.Head.Parking_id = data.Head.Parking_id                    //停车场id
+	d.Head.Company_id = data.Head.Company_id                    //公司id
+	d.Head.Source_type = data.Head.Source_type                  // ddd  vs  zdz
+
+	d.Data.Id = id
 
 	//构建发送的消息，
 	msg := &sarama.ProducerMessage{
@@ -56,10 +79,12 @@ func Producer(msgType string, value string) {
 		Key:       sarama.StringEncoder("key"), //
 	}
 
-	log.Println("msgType = ", msgType, ",value = ", value)
-	msg.Topic = msgType
+	log.Println("回调通知 msgdataTopic = ", data.Head.Topicreply, ",value =d: ", d.Head)
+	msg.Topic = data.Head.Topicreply
 	//将字符串转换为字节数组
-	msg.Value = sarama.ByteEncoder(value)
+	hdvalue, _ := json.Marshal(d)
+	//log.Println("dvalue", string(hdvalue))
+	msg.Value = sarama.ByteEncoder(hdvalue)
 
 	//SendMessage：该方法是生产者生产给定的消息
 	//生产成功的时候返回该消息的分区和所在的偏移量
@@ -67,7 +92,7 @@ func Producer(msgType string, value string) {
 	partition, offset, err := producer.SendMessage(msg)
 
 	if err != nil {
-		log.Println("Send message Fail")
+		log.Println("Send message Fail", err)
 	}
 	log.Printf("Partition = %d, offset=%d\n", partition, offset)
 }
@@ -76,7 +101,7 @@ var (
 	wg sync.WaitGroup
 )
 
-//消费者
+//本机测试消费者
 func Consumer() {
 	// 根据给定的代理地址和配置创建一个消费者
 	consumer, err := sarama.NewConsumer([]string{"localhost:9092"}, nil)
@@ -254,41 +279,45 @@ func (h consumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, cla
 	for msg := range claim.Messages() {
 		log.Printf("++++++++++++++%s group Message topic:%q partition:%d offset:%d  value:%s\n", h.name, msg.Topic, msg.Partition, msg.Offset, string(msg.Value))
 		//消息处理
-		log.Println("消息已接受，正处理中+++++++++++++++++++++++++++++++消息已接受，正处理中+++++++++++")
+		log.Println("消息已接受，正处理中+++++++++++++++消息已接受，正处理中+++++++++++")
 		err, id := ProcessMessage(msg.Topic, msg.Value)
 		if err != nil {
-			log.Println("+++++++++++++++++++++++【ProcessMessage  error】++++++++++++++++++++++", err)
+			log.Println("执行ProcessMessage  error:", err)
 		}
-		log.Println("消息处理完成+++++++++++++++++++++++++++++++消息处理完成++++++++++++++++++++++++++++++++++++++++++++")
 
 		// 手动确认消息
-		sess.MarkMessage(msg, id)
-		db.ChedckyssjDataUpdate(id)
+		sess.MarkMessage(msg, "")
+		//发送回调
+		Producer(msg.Value, id)
+		//更新回调时间
+		uperr := db.ChedckyssjDataUpdate(id)
+		if uperr != nil {
+			log.Println("db.ChedckyssjDataUpdate error :", uperr)
+		}
+		log.Println("消息处理完成+++++++消息处理完成+++++++++++")
 	}
 	return nil
 }
 
 //处理消息  msg 消息数据
 func ProcessMessage(topic string, msg []byte) (error, string) {
-	log.Println("++++++处理消息 ProcessMessage++++++++++++++++++【topic,msg的值】 :", topic, string(msg[1:10]))
-
+	log.Println("正执行处理消息:ProcessMessage【topic,msg的值】 :", topic, string(msg[1:10]))
 	switch topic {
 	case types.DdkafkaTopic:
 		data := new(types.KafKaMsg)
 		err := json.Unmarshal(msg, &data)
 		if err != nil {
-			log.Println("dd +++++++++++++++++json.Unmarshal error:", err)
+			log.Println("执行  types.DdkafkaTopic  json.Unmarshal error:", err)
 			return err, ""
 		}
 
+		log.Println("数据中心接收的数据data:", data)
 		//数据入库
+		log.Println("执行 db.DataStorage(data)，进行数据入库 ")
 		inerr := db.DataStorage(data)
 		if inerr != nil {
 			log.Println("单点车道出口数据入库失败")
-		} else {
-			log.Println("单点车道出口数据入库成功")
 		}
-
 		//回复回调通知
 		return nil, data.Data.Bill_id
 
@@ -312,18 +341,19 @@ func handleErrors(group *sarama.ConsumerGroup, wg *sync.WaitGroup) {
 
 //消费  group name == c1
 func consume(group *sarama.ConsumerGroup, wg *sync.WaitGroup, name string) error {
-	log.Println(name+" group "+"start ok ++++++++++++++++++++消费 kafka consume +++++++++++++++++++++++name:", name)
+	log.Println(name+" group "+"start ok ++++++消费 kafka consume ++++++ name:", name)
 	wg.Done()
 	ctx := context.Background()
 	for {
 		//c1 ：group  topics := []string{"zdzBillExitDataCollectTopic", "topic1","sun", "billDataCollectTopic"}
 		ddtopic := types.DdkafkaTopic
 
-		topics := []string{"topic1", ddtopic}
+		topics := []string{"topic1"}
+		topics = append(topics, ddtopic)
+		log.Println("+++++++++++++++++++消费的topics:", topics)
+
 		//name c1
 		handler := consumerGroupHandler{name: name}
-
-		log.Println("+++++++++++++++++++消费的topics:", topics)
 
 		err := (*group).Consume(ctx, topics, handler)
 		if err != nil {

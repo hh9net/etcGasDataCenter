@@ -211,3 +211,8 @@ type BillHourData struct {
 	Recordcnt     string `json:"recordcnt"`     // Y	记录总数
 	Moneycnt      string `json:"moneycnt"`      //	Y	金额总数
 }
+
+type KafKaReply struct {
+	Head KafKaHeader    `json:"head"`
+	Data KafKaReplyData `json:"data"`
+}
