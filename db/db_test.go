@@ -25,6 +25,42 @@ func TestChedckyssjDataUpdate(t *testing.T) {
 	//log.Println(ChedckyssjDataUpdate("320102000111032020042916134000000386"))
 }
 
+func TestHourDataStorage(t *testing.T) {
+	Newdb()
+	msg := `{
+	"head": {
+		"topic": "hoursGasStationStatisTopic",
+		"index": "0",
+		"topicreply": "SG_GATEWAY_mytopic_test",
+		"id": "100200999911012020121408",
+		"topictime": "",
+		"lane_id": "1101",
+		"parking_id": "1002009999",
+		"company_id": "3202999999",
+		"source_type": "ddd"
+	},
+	"data": {
+		"bill_id": "100200999911012020121508",
+		"company_id": "3202999999",
+		"parking_id": "1002009999",
+		"lane_id": "1101",
+		"record_id": "1002009999110120201214110",
+		"datetime_hour": "2020121507",
+		"recordcnt": "0",
+		"moneycnt": "0"
+	}
+}`
+
+	data := new(types.KafKaBillHourMsg)
+	err := json.Unmarshal([]byte(msg), &data)
+	if err != nil {
+		log.Println("执行  types.DdkafkaTopic  json.Unmarshal error:", err)
+	}
+	log.Println(data)
+	log.Println(HourDataStorage(data))
+
+}
+
 func TestDataStorage(t *testing.T) {
 	Newdb()
 

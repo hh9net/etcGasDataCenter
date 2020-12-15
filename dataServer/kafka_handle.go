@@ -51,7 +51,7 @@ func Producer(msgdata []byte, id string) {
 		_ = producer.Close()
 	}()
 
-	data := new(types.KafKaMsg)
+	data := new(types.KafKaBillHourMsg)
 	err = json.Unmarshal(msgdata, &data)
 	if err != nil {
 		log.Println("dd +++++++++++++++++json.Unmarshal error:", err)
@@ -167,7 +167,7 @@ func NewKafka() *Kafka {
 }
 
 var brokers = []string{"172.18.70.21:9092"}
-var topics = []string{types.DdkafkaTopic, types.ZdzkafkaTopic}
+var topics = []string{types.DdkafkaTopic, types.ZdzkafkaTopic, types.DdkafkaHourTopic} //不参与编译
 var group = "39"
 
 func (p *Kafka) Init() func() {
@@ -280,19 +280,36 @@ func (h consumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, cla
 		log.Printf("++++++++++++++%s group Message topic:%q partition:%d offset:%d  value:%s\n", h.name, msg.Topic, msg.Partition, msg.Offset, string(msg.Value))
 		//消息处理
 		log.Println("消息已接受，正处理中+++++++++++++++消息已接受，正处理中+++++++++++")
-		err, id := ProcessMessage(msg.Topic, msg.Value)
-		if err != nil {
-			log.Println("执行ProcessMessage  error:", err)
+
+		//小时统计
+		if msg.Topic == types.DdkafkaHourTopic {
+
+			err, id := ProcessMessage(msg.Topic, msg.Value)
+			if err != nil {
+				log.Println("执行ProcessMessage  error:", err)
+			}
+			// 手动确认消息
+			sess.MarkMessage(msg, "")
+			//发送回调
+			Producer(msg.Value, id)
 		}
 
-		// 手动确认消息
-		sess.MarkMessage(msg, "")
-		//发送回调
-		Producer(msg.Value, id)
-		//更新回调时间
-		uperr := db.ChedckyssjDataUpdate(id)
-		if uperr != nil {
-			log.Println("db.ChedckyssjDataUpdate error :", uperr)
+		//kafka单点出口原始消息入库
+		if msg.Topic == types.DdkafkaTopic {
+
+			err, id := ProcessMessage(msg.Topic, msg.Value)
+			if err != nil {
+				log.Println("执行ProcessMessage  error:", err)
+			}
+			// 手动确认消息
+			sess.MarkMessage(msg, "")
+			//发送回调
+			Producer(msg.Value, id)
+			//更新回调时间
+			uperr := db.ChedckyssjDataUpdate(id)
+			if uperr != nil {
+				log.Println("db.ChedckyssjDataUpdate error :", uperr)
+			}
 		}
 		log.Println("消息处理完成+++++++消息处理完成+++++++++++")
 	}
@@ -303,6 +320,7 @@ func (h consumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, cla
 func ProcessMessage(topic string, msg []byte) (error, string) {
 	log.Println("正执行处理消息:ProcessMessage【topic,msg的值】 :", topic, string(msg[1:10]))
 	switch topic {
+	//处理单点流水
 	case types.DdkafkaTopic:
 		data := new(types.KafKaMsg)
 		err := json.Unmarshal(msg, &data)
@@ -321,11 +339,29 @@ func ProcessMessage(topic string, msg []byte) (error, string) {
 		//回复回调通知
 		return nil, data.Data.Bill_id
 
+		//处理单点ETC加油小时统计
+	case types.DdkafkaHourTopic:
+		//log.Println("++++++ topic:获取的值：", string(msg))
+		data := new(types.KafKaBillHourMsg)
+		err := json.Unmarshal(msg, &data)
+		if err != nil {
+			log.Println("执行小时统计  types.KafKaBillHourMsg  json.Unmarshal error:", err)
+			return err, ""
+		}
+
+		log.Println("数据中心接收的小时统计数据data:", data)
+		//小时统计数据入库
+		log.Println("执行 db.HourDataStorage(data)，进行数据入库 ")
+
+		inerr := db.HourDataStorage(data)
+		if inerr != nil {
+			log.Println("单点车道出口数据中心接收的小时统计数据入库失败:", inerr)
+		}
+		//回复回调通知
+		return nil, data.Data.Bill_id
+
 	case "topic1":
 		log.Println(string(msg))
-		return nil, ""
-	case "sun":
-		log.Println("++++++ topic:sun 获取的值：", string(msg))
 		return nil, ""
 	}
 
@@ -346,10 +382,11 @@ func consume(group *sarama.ConsumerGroup, wg *sync.WaitGroup, name string) error
 	ctx := context.Background()
 	for {
 		//c1 ：group  topics := []string{"zdzBillExitDataCollectTopic", "topic1","sun", "billDataCollectTopic"}
-		ddtopic := types.DdkafkaTopic
-
+		//ddtopic := types.DdkafkaTopic
+		//ddHourtopic := types.DdkafkaHourTopic
 		topics := []string{"topic1"}
-		topics = append(topics, ddtopic)
+		topics = append(topics, types.DdkafkaTopic)
+		topics = append(topics, types.DdkafkaHourTopic)
 		log.Println("+++++++++++++++++++消费的topics:", topics)
 
 		//name c1

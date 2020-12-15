@@ -59,5 +59,6 @@ kafka_ip          ="172.18.70.21:9092"
 
 ;单点出口数据收集topic
 ddkafka_topic      ="billGasStationDataCollectTopic"
+ddkafka_hour_topic      ="hoursGasStationStatisTopic"
 
 

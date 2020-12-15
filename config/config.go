@@ -5,8 +5,8 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-var conffilepath = "./conf/config.toml" // go run main.go
-//var conffilepath = "../conf/config.toml"
+//var conffilepath = "./conf/config.toml" // go run main.go
+var conffilepath = "../conf/config.toml"
 
 type Config struct { //配置文件要通过tag来指定配置文件中的名称
 	//mysql 配置
@@ -37,10 +37,11 @@ type Config struct { //配置文件要通过tag来指定配置文件中的名称
 	//kafkaip
 	KafkaIp string `ini:"kafka_ip"`
 
-	KafkaIpa     string `ini:"kafka_ipa"`
-	KafkaIpb     string `ini:"kafka_ipb"`
-	KafkaIpc     string `ini:"kafka_ipc"`
-	DdkafkaTopic string `ini:"ddkafka_topic"`
+	KafkaIpa         string `ini:"kafka_ipa"`
+	KafkaIpb         string `ini:"kafka_ipb"`
+	KafkaIpc         string `ini:"kafka_ipc"`
+	DdkafkaTopic     string `ini:"ddkafka_topic"`
+	DdkafkaHourTopic string `ini:"ddkafka_hour_topic"`
 }
 
 //读取配置文件并转成结构体

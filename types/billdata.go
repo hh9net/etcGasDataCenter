@@ -200,7 +200,18 @@ type KafKaReplyData struct {
 	Id string `json:"id"`
 }
 
-//
+type KafKaReply struct {
+	Head KafKaHeader    `json:"head"`
+	Data KafKaReplyData `json:"data"`
+}
+
+//kafka小时统计
+type KafKaBillHourMsg struct {
+	Head KafKaHeader  `json:"head"`
+	Data BillHourData `json:"data"`
+}
+
+//小时统计数据
 type BillHourData struct {
 	Bill_id       string `json:"bill_id"`
 	Company_id    string `json:"company_id"`    // Y	公司/集团ID
@@ -209,10 +220,32 @@ type BillHourData struct {
 	Record_id     string `json:"record_id"`     //	Y	记录ID
 	Datetime_hour string `json:"datetime_hour"` //	Y	YYYYMMDDHH
 	Recordcnt     string `json:"recordcnt"`     // Y	记录总数
-	Moneycnt      string `json:"moneycnt"`      //	Y	金额总数
+	Moneycnt      string `json:"moneycnt"`      //	Y	金额总数 分
 }
 
-type KafKaReply struct {
-	Head KafKaHeader    `json:"head"`
-	Data KafKaReplyData `json:"data"`
+/*
+
+{
+"head": {
+"topic": "hoursGasStationStatisTopic",
+"index": "0",
+"topicreply": "SG_GATEWAY_mytopic_test",
+"id": "100200999911012020121408",
+"topictime": "",
+"lane_id": "1101",
+"parking_id": "1002009999",
+"company_id": "3202999999",
+"source_type": "ddd"
+},
+"data": {
+"bill_id": "100200999911012020121408",
+"company_id": "3202999999",
+"parking_id": "1002009999",
+"lane_id": "1101",
+"record_id": "100200999911012020121408",
+"datetime_hour": "2020121407",
+"recordcnt": "0",
+"moneycnt": "0"
 }
+}
+*/

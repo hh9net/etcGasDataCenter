@@ -308,3 +308,52 @@ func ChedckyssjDataUpdate(Jiaoyjlid string) error {
 	log.Println("Jiaoyjlid", Jiaoyjlid, "更新更新回调时间  成功")
 	return nil
 }
+
+//单点车道出口原始数据入库
+func HourDataStorage(data *types.KafKaBillHourMsg) error {
+	db := utils.GormClient.Client
+	xstjdata := new(types.BDdXiaostj)
+	//先查询
+
+	if qerr := db.Table("b_dd_xiaostj").Where("F_VC_JILID = ?", data.Data.Record_id).First(xstjdata).Error; qerr != nil {
+		// 错误处理...
+		log.Println("单点车道出口小时统计插入 query b_dd_xiaostj error:", qerr)
+		if fmt.Sprint(qerr) == "record not found" {
+
+		} else {
+			return qerr
+		}
+	} else {
+		log.Println("单点车道出口小时统计存在:", xstjdata)
+		return errors.New("单点车道出口小时统计已经存在，不可以插入")
+	}
+	log.Println("单点车道出口小时统计数据库不存在，可以插入:", data.Data.Record_id)
+
+	//赋值
+	xstjdata.FVcGongsjtid = data.Data.Company_id //`F_VC_GONGSJTID` varchar(32) NOT NULL COMMENT '公司/集团ID',
+	xstjdata.FVcTingccbh = data.Data.Parking_id  //`F_VC_TINGCCBH` varchar(32) NOT NULL COMMENT '停车场编号',
+	xstjdata.FVcChedid = data.Data.Lane_id       //`F_VC_CHEDID` varchar(32) NOT NULL COMMENT '车道ID',
+	xstjdata.FVcJilid = data.Data.Record_id      //`F_VC_JILID` varchar(128) DEFAULT NULL COMMENT '记录ID',
+	//sj := utils.StrDATETimeToHourtime(data.Data.Recordcnt)
+	xstjdata.FVcTongjxs = data.Data.Datetime_hour //`F_VC_TONGJXS` varchar(32) NOT NULL COMMENT '统计小时 yyMMddhh',
+
+	c, _ := strconv.Atoi(data.Data.Recordcnt)
+	xstjdata.FNbJilzs = c //`F_NB_JILZS` int(11) DEFAULT NULL COMMENT '记录总数',
+	m, _ := strconv.Atoi(data.Data.Moneycnt)
+	xstjdata.FNbJinezs = m //`F_NB_JINEZS` int(11) DEFAULT NULL COMMENT '金额总数',
+
+	xstjdata.FDtShangcsj = utils.StrTimeTotime(time.Now().Format("2006-01-02 15:04:05")) //`F_DT_SHANGCSJ` datetime DEFAULT NULL COMMENT '上传时间',
+
+	xstjdata.FNbChedlx = 2 //`F_NB_CHEDLX` int(11) NOT NULL DEFAULT '1' COMMENT '车道类型 1：入口；2：出口；',
+
+	//插入
+	if err := db.Table("b_dd_xiaostj").Create(xstjdata).Error; err != nil {
+		// 错误处理...
+		log.Println("单点车道出口小时统计插入 Insert b_dd_xiaostj error:", err)
+		return err
+	}
+
+	log.Println("单点车道出口小时统计插入成功！")
+
+	return nil
+}
