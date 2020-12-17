@@ -279,15 +279,16 @@ func (h consumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, cla
 	for msg := range claim.Messages() {
 		log.Printf("++++++++++++++%s group Message topic:%q partition:%d offset:%d  value:%s\n", h.name, msg.Topic, msg.Partition, msg.Offset, string(msg.Value))
 		//消息处理
-		log.Println("消息已接受，正处理中+++++++++++++++消息已接受，正处理中+++++++++++")
 
 		//小时统计
 		if msg.Topic == types.DdkafkaHourTopic {
+			log.Println("小时统计消息已接受，正处理中+++++++++++++++消息已接受，正处理中+++++++++++")
 
 			err, id := ProcessMessage(msg.Topic, msg.Value)
 			if err != nil {
 				log.Println("执行ProcessMessage  error:", err)
 			}
+
 			// 手动确认消息
 			sess.MarkMessage(msg, "")
 			//发送回调
@@ -296,20 +297,27 @@ func (h consumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, cla
 
 		//kafka单点出口原始消息入库
 		if msg.Topic == types.DdkafkaTopic {
+			log.Println("kafka单点出口原始消息入库的消息已接受，正处理中+++++++++++++++消息已接受，正处理中+++++++++++")
 
 			err, id := ProcessMessage(msg.Topic, msg.Value)
 			if err != nil {
 				log.Println("执行ProcessMessage  error:", err)
 			}
+
 			// 手动确认消息
 			sess.MarkMessage(msg, "")
 			//发送回调
 			Producer(msg.Value, id)
-			//更新回调时间
-			uperr := db.ChedckyssjDataUpdate(id)
-			if uperr != nil {
-				log.Println("db.ChedckyssjDataUpdate error :", uperr)
+
+			//kafka单点出口原始消息入库成功
+			if err == nil {
+				//更新回调时间
+				uperr := db.ChedckyssjDataUpdate(id)
+				if uperr != nil {
+					log.Println("db.ChedckyssjDataUpdate error :", uperr)
+				}
 			}
+
 		}
 		log.Println("消息处理完成+++++++消息处理完成+++++++++++")
 	}
@@ -318,7 +326,7 @@ func (h consumerGroupHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, cla
 
 //处理消息  msg 消息数据
 func ProcessMessage(topic string, msg []byte) (error, string) {
-	log.Println("正执行处理消息:ProcessMessage【topic,msg的值】 :", topic, string(msg[1:10]))
+	log.Println("正执行处理消息:ProcessMessage【topic,msg[0:10]的值】 :", topic, string(msg[0:10]))
 	switch topic {
 	//处理单点流水
 	case types.DdkafkaTopic:
@@ -334,7 +342,8 @@ func ProcessMessage(topic string, msg []byte) (error, string) {
 		log.Println("执行 db.DataStorage(data)，进行数据入库 ")
 		inerr := db.DataStorage(data)
 		if inerr != nil {
-			log.Println("单点车道出口数据入库失败")
+			log.Println("单点车道出口数据入库失败,inerr:", inerr)
+			return inerr, data.Data.Bill_id
 		}
 		//回复回调通知
 		return nil, data.Data.Bill_id
@@ -397,7 +406,7 @@ func consume(group *sarama.ConsumerGroup, wg *sync.WaitGroup, name string) error
 			log.Println("++++++++++++++++++【(*group).Consume  error】  +++++++++++++++++++++", err)
 			return err
 		}
-		log.Println(name+" group "+"start ok", "+++++++++++++++++++++++[kafka ok]+++++++++++++++++++++++++")
+		log.Println("+++++++++++++++++++++++[kafka ok]+++++++++++++++++++++++++")
 	}
 }
 

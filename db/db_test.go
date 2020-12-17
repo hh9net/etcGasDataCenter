@@ -137,6 +137,7 @@ func TestDataStorage(t *testing.T) {
 	}
 }`
 
+	//msg1 :=`{billGasStationDataCollectTopic 21 SG_GATEWAY_mytopic_test_gasstation 200200999811012020121103 2020-12-11 16:00:05    ddd} {{200200999811012020121103       200200999811012020121103XXXXXXXX 0 0 2002009998  3202999999    0  V1.0.2020111811.release 1101   0  0 0   0 nil 0   0     0       0 0 0 0 0 0 0}     }}`
 	data := new(types.KafKaMsg)
 	err := json.Unmarshal([]byte(msg), &data)
 	if err != nil {

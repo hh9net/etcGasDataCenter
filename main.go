@@ -22,6 +22,9 @@ func main() {
 	types.KafkaIp = conf.KafkaIp
 	types.DdkafkaTopic = conf.DdkafkaTopic
 	types.DdkafkaHourTopic = conf.DdkafkaHourTopic
-	log.Println("conf.KafkaIp:", conf.KafkaIp, "conf.DdkafkaTopic:", conf.DdkafkaTopic)
+	log.Println("conf.KafkaIp:", conf.KafkaIp)
+	log.Println("conf.DdkafkaTopic:", conf.DdkafkaTopic)
+	log.Println("DdkafkaHourTopic:", conf.DdkafkaHourTopic)
+
 	dataServer.BillGasStationDataCollect()
 }

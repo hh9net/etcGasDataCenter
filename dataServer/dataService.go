@@ -15,7 +15,7 @@ KafkaI:
 	err := ConsumerGroup()
 	if err != nil {
 		log.Println("+++++++++++++++++【执行ConsumerGroup() 处理kafka数据】 error :", err)
-		time.Sleep(time.Second * 20)
+		time.Sleep(time.Second * 30)
 		goto KafkaI
 	}
 

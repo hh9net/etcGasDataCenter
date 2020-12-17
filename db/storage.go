@@ -112,15 +112,44 @@ func QueryRate(Parking_id, Company_id string) *Result {
 func DataStorage(data *types.KafKaMsg) error {
 
 	ysdata := new(types.BDdChedckyssj)
-	//数据赋值
-	ysdata.FVcJiaoyjlid = data.Data.Bill_id //  `F_VC_JIAOYJLID` varchar(128) NOT NULL COMMENT '交易记录ID 停车场ID+车道ID+年月日时分秒+加密卡交易序号',
+
+	log.Println("交易时间:", data.Data.Trade_time)
+	if data.Data.Trade_time == "" {
+		return errors.New("交易时间不能为空")
+	}
 
 	JYsj := strings.Split(data.Data.Trade_time, " ") //2020-04-29 16:28:55
-	JYTJY := strings.Split(JYsj[0], "-")             //2020-04-29 16:28:55
+	if len(JYsj) != 3 {
+		return errors.New("交易时间格式不正确")
+	}
 
+	JYTJY := strings.Split(JYsj[0], "-") //2020-04-29 16:28:55
+	if len(JYsj) != 3 {
+		return errors.New("交易时间格式不正确")
+	}
+
+	qyssjerr := QueryChedckyssjData(ysdata.FVcJiaoyjlid)
+	if qyssjerr != nil {
+		if fmt.Sprint(qyssjerr) == "单点车道出口原始数据已经存在" {
+			log.Println(qyssjerr)
+			return qyssjerr
+		} else {
+			return qyssjerr
+		}
+	}
+
+	//数据赋值
 	ysdata.FVcJiaoytjr = JYTJY[0] + JYTJY[1] + JYTJY[2] //  `F_VC_JIAOYTJR` varchar(32) DEFAULT NULL COMMENT '交易统计日',
+	log.Println("数据赋值交易统计日:", ysdata.FVcJiaoytjr)
+
 	JYTJS := strings.Split(JYsj[1], ":")
+	if len(JYTJS) != 3 {
+		return errors.New("交易时间格式不正确")
+	}
 	ysdata.FVcJiaoytjrs = JYTJS[0] //  `F_VC_JIAOYTJRS` varchar(32) DEFAULT NULL COMMENT '交易统计时',
+	log.Println("数据赋值交易统计时:", ysdata.FVcJiaoytjrs)
+	ysdata.FVcJiaoyjlid = data.Data.Bill_id //  `F_VC_JIAOYJLID` varchar(128) NOT NULL COMMENT '交易记录ID 停车场ID+车道ID+年月日时分秒+加密卡交易序号',
+	log.Println("数据赋值交易记录ID:", ysdata.FVcJiaoyjlid)
 
 	ysdata.FVcTingccbh = data.Data.Parking_id      //  `F_VC_TINGCCBH` varchar(32) NOT NULL COMMENT '停车场编号',
 	ysdata.FVcChedid = data.Data.Lane_id           //  `F_VC_CHEDID` varchar(32) NOT NULL COMMENT '车道ID',
@@ -258,16 +287,6 @@ func DataStorage(data *types.KafKaMsg) error {
 	}
 
 	//ysdata.FNbSheblx = 0 //`F_NB_SHEBLX` int(11) NOT NULL DEFAULT '0' COMMENT '设备类型 0、标准设备；1、手持机',
-
-	qyssjerr := QueryChedckyssjData(ysdata.FVcJiaoyjlid)
-	if qyssjerr != nil {
-		if fmt.Sprint(qyssjerr) == "单点车道出口原始数据已经存在" {
-			log.Println(qyssjerr)
-			return qyssjerr
-		} else {
-			return qyssjerr
-		}
-	}
 
 	//单点车道出口原始交易数据入库
 	inerr := InsertChedckyssjData(ysdata)
