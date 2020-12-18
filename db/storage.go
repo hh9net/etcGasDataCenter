@@ -119,13 +119,13 @@ func DataStorage(data *types.KafKaMsg) error {
 	}
 
 	JYsj := strings.Split(data.Data.Trade_time, " ") //2020-04-29 16:28:55
-	if len(JYsj) != 3 {
-		return errors.New("交易时间格式不正确")
+	if len(JYsj) != 2 {
+		return errors.New("交易时间,交易时间格式不正确")
 	}
 
 	JYTJY := strings.Split(JYsj[0], "-") //2020-04-29 16:28:55
-	if len(JYsj) != 3 {
-		return errors.New("交易时间格式不正确")
+	if len(JYTJY) != 3 {
+		return errors.New("交易统计日,交易时间格式不正确")
 	}
 
 	qyssjerr := QueryChedckyssjData(ysdata.FVcJiaoyjlid)
@@ -144,7 +144,7 @@ func DataStorage(data *types.KafKaMsg) error {
 
 	JYTJS := strings.Split(JYsj[1], ":")
 	if len(JYTJS) != 3 {
-		return errors.New("交易时间格式不正确")
+		return errors.New("交易统计时,交易时间格式不正确")
 	}
 	ysdata.FVcJiaoytjrs = JYTJS[0] //  `F_VC_JIAOYTJRS` varchar(32) DEFAULT NULL COMMENT '交易统计时',
 	log.Println("数据赋值交易统计时:", ysdata.FVcJiaoytjrs)
@@ -175,11 +175,11 @@ func DataStorage(data *types.KafKaMsg) error {
 
 	ysdata.FVcKadqsj = utils.StrDATETimeTotime(data.Data.Card_expired) //  `F_VC_KADQSJ` datetime NOT NULL COMMENT '卡到期时间',
 
-	qm, _ := strconv.Atoi(data.Data.Reset_money)
-	ysdata.FNbJiaoyqye = int64(qm) //  `F_NB_JIAOYQYE` bigint(20) NOT NULL COMMENT '交易前余额',
+	hm, _ := strconv.Atoi(data.Data.Reset_money) //之后
+	ysdata.FNbJiaoyhye = int64(hm)               // `F_NB_JIAOYHYE` bigint(20) NOT NULL COMMENT '交易后余额',
 
-	hm, _ := strconv.Atoi(data.Data.Before_money)
-	ysdata.FNbJiaoyhye = int64(hm) //  `F_NB_JIAOYHYE` bigint(20) NOT NULL COMMENT '交易后余额',
+	qm, _ := strconv.Atoi(data.Data.Before_money) //之前
+	ysdata.FNbJiaoyqye = int64(qm)                // //  `F_NB_JIAOYQYE` bigint(20) NOT NULL COMMENT '交易前余额',
 
 	m, _ := strconv.Atoi(data.Data.Money)
 	ysdata.FNbJine = int64(m) //  `F_NB_JINE` int(11) NOT NULL COMMENT '金额',
@@ -280,9 +280,10 @@ func DataStorage(data *types.KafKaMsg) error {
 	//ysdata.FNbTiantjzt =0 //  `F_NB_TIANTJZT` int(11) DEFAULT '0' COMMENT '天统计状态 0：未统计、1：已统计',
 
 	if data.Data.DeviceType == "31" {
+		log.Println("应用场景:", ysdata.FNbYingycj)
 		ysdata.FNbYingycj = 31 //`F_NB_YINGYCJ` int(11) NOT NULL DEFAULT '1' COMMENT '应用场景 1、单点停车场；31、单点加油站',
 	} else {
-		log.Println("应用场景不对:", data.Data.DeviceType, "已经改成31")
+		log.Println("应用场景不对:", data.Data.DeviceType, "已经改成31", data.Data.Bill_id)
 		ysdata.FNbYingycj = 31 //`F_NB_YINGYCJ` int(11) NOT NULL DEFAULT '1' COMMENT '应用场景 1、单点停车场；31、单点加油站',
 	}
 
