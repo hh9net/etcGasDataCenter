@@ -41,6 +41,12 @@ func InsertChedckyssjData(Chedckyssj *types.BDdChedckyssj) error {
 		return err
 	}
 	log.Println("单点车道出口原始数据表插入成功！", Chedckyssj.FVcJiaoyjlid)
+
+	//if err := db.Table("b_dd_chedckyssj").Update("name", "hello").Error; err != nil {
+	//	// 错误处理...
+	//	log.Println("Insert b_dd_chedckyssj error:", err)
+	//	return err
+	//}
 	return nil
 }
 
@@ -123,8 +129,8 @@ func DataStorage(data *types.KafKaMsg) error {
 		return errors.New("交易时间,交易时间格式不正确")
 	}
 
-	JYTJY := strings.Split(JYsj[0], "-") //2020-04-29 16:28:55
-	if len(JYTJY) != 3 {
+	JYTJR := strings.Split(JYsj[0], "-") //2020-04-29 16:28:55
+	if len(JYTJR) != 3 {
 		return errors.New("交易统计日,交易时间格式不正确")
 	}
 
@@ -139,7 +145,7 @@ func DataStorage(data *types.KafKaMsg) error {
 	}
 
 	//数据赋值
-	ysdata.FVcJiaoytjr = JYTJY[0] + JYTJY[1] + JYTJY[2] //  `F_VC_JIAOYTJR` varchar(32) DEFAULT NULL COMMENT '交易统计日',
+	ysdata.FVcJiaoytjr = JYTJR[0] + JYTJR[1] + JYTJR[2] //  `F_VC_JIAOYTJR` varchar(32) DEFAULT NULL COMMENT '交易统计日',
 	log.Println("数据赋值交易统计日:", ysdata.FVcJiaoytjr)
 
 	JYTJS := strings.Split(JYsj[1], ":")
@@ -209,8 +215,14 @@ func DataStorage(data *types.KafKaMsg) error {
 	}
 
 	yhtcsc, _ := strconv.Atoi(data.Data.Duration)
-	ysdata.FNbYonghtcsc = yhtcsc //  `F_NB_YONGHTCSC` int(11) DEFAULT NULL COMMENT '用户停车时长(分)',
 
+	if yhtcsc == 0 {
+		ysdata.FNbYonghtcsc = 0 //  `F_NB_YONGHTCSC` int(11) DEFAULT NULL COMMENT '用户停车时长(分)',
+	} else {
+		ysdata.FNbYonghtcsc = yhtcsc //  `F_NB_YONGHTCSC` int(11) DEFAULT NULL COMMENT '用户停车时长(分)',
+	}
+
+	log.Println("用户停车时长(分):", ysdata.FNbYonghtcsc)
 	ysdata.FVcZhangdms = data.Data.Bill_description //  `F_VC_ZHANGDMS` varchar(512) NOT NULL COMMENT '账单描述（给用户通知的信息）',
 
 	ysdata.FVcShujqm = "0" //  `F_VC_SHUJQM` varchar(32) NOT NULL COMMENT '数据签名',
@@ -249,14 +261,14 @@ func DataStorage(data *types.KafKaMsg) error {
 
 	//查询停车场费率，查询公司费率
 	Rate := QueryRate(data.Data.Parking_id, data.Data.Company_id)
-
 	if Rate != nil {
 		ysdata.FNbFeil = Rate.Rate //  `F_NB_FEIL` int(11) DEFAULT NULL COMMENT '费率-NEW 万分比',
 		//金额*费率/10000
 		ysdata.FNbShouxf = int64(ysdata.FNbJine * int64(Rate.Rate) / 10000) //  `F_NB_SHOUXF` int(11) DEFAULT NULL COMMENT '手续费-NEW 单位分',
 
 	} else {
-		ysdata.FNbShouxf = 60
+		ysdata.FNbFeil = 60
+		ysdata.FNbShouxf = ysdata.FNbJine * 60 / 10000
 	}
 
 	obulx, _ := strconv.Atoi(data.Data.Obu_type)
