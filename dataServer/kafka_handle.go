@@ -167,7 +167,7 @@ func NewKafka() *Kafka {
 }
 
 var brokers = []string{"172.18.70.21:9092"}
-var topics = []string{types.DdkafkaTopic, types.ZdzkafkaTopic, types.DdkafkaHourTopic} //不参与编译
+var topics = []string{types.DdkafkaTopic, types.DdkafkaHourTopic} //不参与编译
 var group = "39"
 
 func (p *Kafka) Init() func() {
@@ -393,7 +393,8 @@ func consume(group *sarama.ConsumerGroup, wg *sync.WaitGroup, name string) error
 		//c1 ：group  topics := []string{"zdzBillExitDataCollectTopic", "topic1","sun", "billDataCollectTopic"}
 		//ddtopic := types.DdkafkaTopic
 		//ddHourtopic := types.DdkafkaHourTopic
-		topics := []string{"topic1"}
+		//	topics := []string{"topic1"}
+		var topics []string
 		topics = append(topics, types.DdkafkaTopic)
 		topics = append(topics, types.DdkafkaHourTopic)
 		log.Println("+++++++++++++++++++消费的topics:", topics)

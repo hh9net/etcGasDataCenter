@@ -314,11 +314,11 @@ func DataStorage(data *types.KafKaMsg) error {
 	jymx.FVcYouplx = data.Data.Oil_type   //	`F_VC_YOUPLX` varchar(32) DEFAULT NULL COMMENT '油品类型 01:97号汽油;02:95号汽油;03:93号汽油;04:92号汽油;05:90号汽油;06:98 号汽油;;11:5号柴油;12:0号柴油 ;13:10号柴油;14:20号柴油;15:35号柴油;16:50号柴油',
 	Unit_price, _ := strconv.Atoi(data.Data.Unit_price)
 	jymx.FNbYoupdj = Unit_price //	`F_NB_YOUPDJ` int(11) DEFAULT NULL COMMENT '油品单价 单位：分',
-	Litre, _ := strconv.Atoi(data.Data.Litre)
-	jymx.FNbJiayl = Litre                  //	`F_NB_JIAYL` varchar(32) DEFAULT NULL COMMENT '加油量 单位：升',
+	//Litre, _ := strconv.Atoi(data.Data.Litre)
+	jymx.FNbJiayl = data.Data.Litre        //	`F_NB_JIAYL` varchar(32) DEFAULT NULL COMMENT '加油量 单位：升',
 	jymx.FVcYouqh = data.Data.Oilgunnumber //	`F_VC_YOUQH` varchar(32) DEFAULT NULL COMMENT '油枪号',
-	Oilavailable, _ := strconv.Atoi(data.Data.Oilavailable)
-	jymx.FNbKejyl = Oilavailable //	`F_NB_KEJYL` varchar(32) DEFAULT NULL COMMENT '可加油量 单位：升',
+	//Oilavailable, _ := strconv.Atoi(data.Data.Oilavailable)
+	jymx.FNbKejyl = data.Data.Oilavailable //	`F_NB_KEJYL` varchar(32) DEFAULT NULL COMMENT '可加油量 单位：升',
 
 	//新增车道出口原始交易数据加油明细
 	inmxerr := InsertChedckyssjJYMXData(jymx)

@@ -11,7 +11,6 @@ var KafkaIp string
 
 var DdkafkaTopic string
 var DdkafkaHourTopic string
-var ZdzkafkaTopic string
 
 //1、单点车道出口原始数据表
 //CREATE TABLE `b_dd_chedckyssj` 单点车道出口原始数据-U (
@@ -108,9 +107,9 @@ type BJyzJiaymx struct {
 	FVcJiaoyjlid string `gorm:"column:F_VC_JIAOYJLID"` // `F_VC_JIAOYJLID` varchar(128) NOT NULL COMMENT '交易记录ID 停车场ID+车道ID+年月日时分秒',
 	FVcYouplx    string `gorm:"column:F_VC_YOUPLX"`    //	`F_VC_YOUPLX` varchar(32) DEFAULT NULL COMMENT '油品类型 01:97号汽油;02:95号汽油;03:93号汽油;04:92号汽油;05:90号汽油;06:98 号汽油;;11:5号柴油;12:0号柴油 ;13:10号柴油;14:20号柴油;15:35号柴油;16:50号柴油',
 	FNbYoupdj    int    `gorm:"column:F_NB_YOUPDJ"`    //	`F_NB_YOUPDJ` int(11) DEFAULT NULL COMMENT '油品单价 单位：分',
-	FNbJiayl     int    `gorm:"column:F_NB_JIAYL"`     //	`F_NB_JIAYL` varchar(32) DEFAULT NULL COMMENT '加油量 单位：升',
+	FNbJiayl     string `gorm:"column:F_NB_JIAYL"`     //	`F_NB_JIAYL` varchar(32) DEFAULT NULL COMMENT '加油量 单位：升',
 	FVcYouqh     string `gorm:"column:F_VC_YOUQH"`     //	`F_VC_YOUQH` varchar(32) DEFAULT NULL COMMENT '油枪号',
-	FNbKejyl     int    `gorm:"column:F_NB_KEJYL"`     //	`F_NB_KEJYL` varchar(32) DEFAULT NULL COMMENT '可加油量 单位：升',
+	FNbKejyl     string `gorm:"column:F_NB_KEJYL"`     //	`F_NB_KEJYL` varchar(32) DEFAULT NULL COMMENT '可加油量 单位：升',
 	//	PRIMARY KEY (`F_VC_JIAOYJLID`)
 	//) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COMMENT = '加油明细'
 }
