@@ -4,9 +4,6 @@ import (
 	"time"
 )
 
-var KafkaIpa string
-var KafkaIpb string
-var KafkaIpc string
 var KafkaIp string
 
 var DdkafkaTopic string

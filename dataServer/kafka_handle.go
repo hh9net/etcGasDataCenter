@@ -16,14 +16,8 @@ import (
 )
 
 const (
-	kafkaConn1 = "localhost:9092" //本机
-	kafkaConn2 = "127.0.0.1:9093"
-	kafkaConn3 = "127.0.0.1:9094"
-	topic      = "topic1"
+	topic = "topic1"
 )
-
-//代理
-//var brokerAddrs = []string{kafkaConn1, kafkaConn2, kafkaConn3}
 
 //生产数据
 func Producer(msgdata []byte, id string) {
@@ -41,7 +35,6 @@ func Producer(msgdata []byte, id string) {
 	// 使用给定代理地址和配置创建一个同步生产者
 	//producer, err := sarama.NewSyncProducer([]string{"localhost:9092"}, config)
 	producer, err := sarama.NewSyncProducer([]string{types.KafkaIp}, config)
-
 	if err != nil {
 		log.Println("sarama.NewSyncProducer errpr:", err)
 		return
@@ -50,7 +43,6 @@ func Producer(msgdata []byte, id string) {
 	defer func() {
 		_ = producer.Close()
 	}()
-
 	data := new(types.KafKaBillHourMsg)
 	err = json.Unmarshal(msgdata, &data)
 	if err != nil {
@@ -198,25 +190,25 @@ func (p *Kafka) Init() func() {
 		}()
 		for {
 			if err := client.Consume(ctx, p.topics, p); err != nil {
-				log.Println("++++++++++++++++++++++++++++++++Error from consumer: ", err)
+				log.Println("Error from consumer: ", err)
 			}
 			// check if context was cancelled, signaling that the consumer should stop
 			if ctx.Err() != nil {
-				log.Println("+++++++++++++++++++++++++ctx.Err():", ctx.Err())
+				log.Println("ctx.Err():", ctx.Err())
 				return
 			}
 			p.ready = make(chan bool)
 		}
 	}()
 	<-p.ready
-	log.Infoln("+++++++++++++++++++++++++++++Sarama consumer up and running!...")
+	log.Infoln("++++Sarama consumer up and running!...")
 	// 保证在系统退出时，通道里面的消息被消费
 	return func() {
-		log.Println("+++++++++++++++++++++++++++++kafka close")
+		log.Println("kafka close")
 		cancel()
 		wg.Wait()
 		if err = client.Close(); err != nil {
-			log.Println("++++++++++++++++++++++++++++++++++Error closing client: ", err)
+			log.Println("Error closing client: ", err)
 		}
 	}
 }
@@ -417,19 +409,20 @@ func ConsumerGroup() error {
 	config := sarama.NewConfig()
 	config.Consumer.Return.Errors = false
 	config.Version = sarama.V0_10_2_0
-	client, err := sarama.NewClient([]string{types.KafkaIpa, types.KafkaIpb, types.KafkaIpc, types.KafkaIp}, config)
+	log.Println("sarama.NewClient([]string{ types.KafkaIp}", types.KafkaIp)
+	client, err := sarama.NewClient([]string{types.KafkaIp, types.KafkaIp, types.KafkaIp}, config)
 	defer func() {
 		_ = client.Close()
 	}()
 
 	if err != nil {
-		log.Println("++++++++++++++++++++++++++sarama.NewClient 执行出错: ", err)
+		log.Println("sarama.NewClient 执行出错: ", err)
 		return err
 	}
 	//c1 组
 	group1, err := sarama.NewConsumerGroupFromClient("c1", client)
 	if err != nil {
-		log.Println("+++++++++++++++++++++++++++++++sarama.NewConsumerGroupFromClient 执行出错: ", err)
+		log.Println("sarama.NewConsumerGroupFromClient 执行出错: ", err)
 		return err
 
 	}
